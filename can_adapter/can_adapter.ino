@@ -36,7 +36,7 @@ uint8_t m_can_dlc = 8;
 #define RX_LED 5
 
 // Debugging
-#define DEBUG
+//#define DEBUG
 
 /**
  * @brief Main Arduino Setup
@@ -53,6 +53,7 @@ void setup() {
 
     // Init serial port
     Serial.begin(115200);
+    Serial.println("Adapter Init");
 
     // Init
     can_trans = new MCP2515(CAN_CS);
@@ -86,6 +87,10 @@ void loop() {
 
             adapterSendMessage(message.substring(message.indexOf(">")+1));
 
+            #ifdef DEBUG
+                printOutgoingCANMessage();
+            #endif
+
             digitalWrite(TX_LED, LOW);
             interrupts();
         }
@@ -108,15 +113,13 @@ void canLoop() {
 
 bool getCANMessage() {
     if (can_trans -> readMessage(&can_msg_in) == MCP2515::ERROR_OK) {
-        if (can_msg_in.can_id == m_can_id) {
-            // Print Message
-            digitalWrite(RX_LED, HIGH);
-            printReceivedCANMessage();
-            digitalWrite(RX_LED, LOW);
+        // Print Message
+        digitalWrite(RX_LED, HIGH);
+        printReceivedCANMessage();
+        digitalWrite(RX_LED, LOW);
 
-            return true;
-
-        } 
+        return true;
+        
     }
 
     return false;
@@ -127,7 +130,7 @@ bool getCANMessage() {
 /** @brief Print out the received can frame*/
 void printReceivedCANMessage() {
     // Start log
-    Serial.print("CAN-RX: (" + String(can_msg_in.can_id) + ") ");
+    Serial.print("<(" + String(can_msg_in.can_id) + ") ");
 
     // Print data
     for (int i = 0; i < can_msg_in.can_dlc; i++) {
